@@ -3,8 +3,9 @@
 namespace League\Route\Test\Http\JsonResponse;
 
 use League\Route\Http\JsonResponse\Ok;
+use PHPUnit\Framework\TestCase;
 
-class OkTest extends \PHPUnit_Framework_Testcase
+class OkTest extends TestCase
 {
     /**
      * Asserts that new Ok responses have a 200 status code

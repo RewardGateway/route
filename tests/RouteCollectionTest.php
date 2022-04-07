@@ -6,8 +6,12 @@ use League\Route\RouteCollection;
 use League\Route\Strategy\RestfulStrategy;
 use League\Route\Strategy\RequestResponseStrategy;
 use League\Route\Strategy\UriStrategy;
+use PHPUnit\Framework\TestCase;
+use RuntimeException;
+use FastRoute\Dispatcher\GroupCountBased;
+use League\Route\Dispatcher;
 
-class RouteCollectionTest extends \PHPUnit_Framework_TestCase
+class RouteCollectionTest extends TestCase
 {
     /**
      * Asserts that routes are set via convenience methods
@@ -92,7 +96,7 @@ class RouteCollectionTest extends \PHPUnit_Framework_TestCase
      *
      * @return void
      */
-    public function testGlobalStrategyIsUsedWhenSet()
+    public function testGlobalStrategyIsUsedWhenSet(): void
     {
         $router = new RouteCollection;
 
@@ -126,15 +130,13 @@ class RouteCollectionTest extends \PHPUnit_Framework_TestCase
 
     /**
      * Asserts that `getDispatcher` method returns correct instance
-     *
-     * @return void
      */
-    public function testCollectionReturnsDispatcher()
+    public function testCollectionReturnsDispatcher(): void
     {
         $router = new RouteCollection;
 
-        $this->assertInstanceOf('League\Route\Dispatcher', $router->getDispatcher());
-        $this->assertInstanceOf('FastRoute\Dispatcher\GroupCountBased', $router->getDispatcher());
+        $this->assertInstanceOf(Dispatcher::class, $router->getDispatcher());
+        $this->assertInstanceOf(GroupCountBased::class, $router->getDispatcher());
     }
 
     /**
@@ -148,28 +150,26 @@ class RouteCollectionTest extends \PHPUnit_Framework_TestCase
 
         $router->setStrategy(new RequestResponseStrategy);
 
-        $this->assertInstanceOf('League\Route\Dispatcher', $router->getDispatcher());
-        $this->assertInstanceOf('FastRoute\Dispatcher\GroupCountBased', $router->getDispatcher());
+        $this->assertInstanceOf(Dispatcher::class, $router->getDispatcher());
+        $this->assertInstanceOf(GroupCountBased::class, $router->getDispatcher());
     }
 
     /**
      * Asserts that appropriately configured regex strings are added to patternMatchers.
-     *
-     * @return void
      */
-    public function testNewPatternMatchesCanBeAddedAtRuntime()
+    public function testNewPatternMatchesCanBeAddedAtRuntime(): void
     {
         $router = new RouteCollection;
 
         $router->addPatternMatcher('mockMatcher', '[a-zA-Z]');
 
-        $matchers = $this->getObjectAttribute($router, "patternMatchers");
+        $matchers = $router->getPatternMatchers();
 
         $this->assertArrayHasKey('/{(.+?):mockMatcher}/', $matchers);
         $this->assertEquals('{$1:[a-zA-Z]}', $matchers['/{(.+?):mockMatcher}/']);
     }
 
-    public function testCallableControllers()
+    public function testCallableControllers(): void
     {
         $router = new RouteCollection;
 
@@ -182,11 +182,9 @@ class RouteCollectionTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(1, $routes);
     }
 
-    /**
-     * @expectedException \RuntimeException
-     */
-    public function testNonCallbleObjectControllersError()
+    public function testNonCallbleObjectControllersError(): void
     {
+        $this->expectException(RuntimeException::class);
         $router = new RouteCollection;
 
         $router->get('/', new \stdClass);

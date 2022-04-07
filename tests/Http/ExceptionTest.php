@@ -3,8 +3,9 @@
 namespace League\Route\Test\Http;
 
 use League\Route\Http\Exception;
+use PHPUnit\Framework\TestCase;
 
-class ExceptionTest extends \PHPUnit_Framework_Testcase
+class ExceptionTest extends TestCase
 {
     /**
      * Asserts that a HTTP Exception is built correctly when thrown

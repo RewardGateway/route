@@ -210,6 +210,11 @@ class RouteCollection extends RouteCollector
         $this->patternMatchers[$pattern] = $regex;
     }
 
+    public function getPatternMatchers(): array
+    {
+        return $this->patternMatchers;
+    }
+
     /**
      * Convenience method to convert pre-defined key words in to regex strings
      *

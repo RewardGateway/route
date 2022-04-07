@@ -3,8 +3,9 @@
 namespace League\Route\Test\Http\JsonResponse;
 
 use League\Route\Http\JsonResponse\PartialContent;
+use PHPUnit\Framework\TestCase;
 
-class PartialContentTest extends \PHPUnit_Framework_Testcase
+class PartialContentTest extends TestCase
 {
     /**
      * Asserts that new PartialContent responses have a 206 status code

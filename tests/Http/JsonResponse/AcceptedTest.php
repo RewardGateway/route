@@ -3,8 +3,9 @@
 namespace League\Route\Test\Http\JsonResponse;
 
 use League\Route\Http\JsonResponse\Accepted;
+use PHPUnit\Framework\TestCase;
 
-class AcceptedTest extends \PHPUnit_Framework_Testcase
+class AcceptedTest extends TestCase
 {
     /**
      * Asserts that new Accepted responses have a 202 status code

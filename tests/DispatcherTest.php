@@ -9,35 +9,41 @@ use League\Route\Strategy\MethodArgumentStrategy;
 use League\Route\Strategy\RestfulStrategy;
 use League\Route\Strategy\RequestResponseStrategy;
 use League\Route\Strategy\UriStrategy;
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
+use League\Route\Http\Exception\NotFoundException;
+use League\Route\Http\Exception\MethodNotAllowedException;
+use League\Route\Strategy\StrategyInterface;
+use League\Container\ContainerInterface;
+use League\Container\ServiceProvider;
 
-class DispatcherTest extends \PHPUnit_Framework_TestCase
+class DispatcherTest extends TestCase
 {
     /**
      * Assert that a route using the Restful Strategy returns a json response
      * when a http exception is thrown
-     *
-     * @return void
      */
-    public function testRestfulStrategyReturnsJsonResponseWhenHttpExceptionIsThrown()
+    public function testRestfulStrategyReturnsJsonResponseWhenHttpExceptionIsThrown(): void
     {
-        $controller = $this->getMock('SomeClass', ['someMethod']);
+        $controller = $this->createMock(Route\Test\Fixture\SomeClass::class);
 
         $controller->expects($this->once())
                    ->method('someMethod')
                    ->will($this->throwException(new HttpException\ConflictException));
 
-        $container = $this->getMock('League\Container\Container');
-        $request   = $this->getMock('Symfony\Component\HttpFoundation\Request');
+        $container = $this->createMock(Container::class);
+        $request   = $this->createMock(Request::class);
 
-        $container->expects($this->at(0))->method('isRegistered')->will($this->returnValue(false));
-        $container->expects($this->at(1))->method('isInServiceProvider')->will($this->returnValue(true));
-        $container->expects($this->at(2))->method('get')->will($this->returnValue($request));
+        $container->expects($this->at(0))->method('isRegistered')->willReturn(false);
+        $container->expects($this->at(1))->method('isInServiceProvider')->willReturn(true);
+        $container->expects($this->at(2))->method('get')->willReturn($request);
 
         $container->expects($this->at(3))
                   ->method('get')
                   ->with($this->equalTo('SomeClass'))
-                  ->will($this->returnValue($controller));
+                  ->willReturn($controller);
 
         $collection = new Route\RouteCollection($container);
         $collection->setStrategy(new RestfulStrategy);
@@ -46,19 +52,17 @@ class DispatcherTest extends \PHPUnit_Framework_TestCase
         $dispatcher = $collection->getDispatcher();
         $response = $dispatcher->dispatch('GET', '/route');
 
-        $this->assertInstanceOf('Symfony\Component\HttpFoundation\JsonResponse', $response);
+        $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertSame(409, $response->getStatusCode());
         $this->assertSame('{"status_code":409,"message":"Conflict"}', $response->getContent());
     }
 
     /**
      * Assert that a route using Restful Strategy throws exception for wrong response type
-     *
-     * @return void
      */
-    public function testRestfulStrategyRouteThrowsExceptionWhenWrongResponseReturned()
+    public function testRestfulStrategyRouteThrowsExceptionWhenWrongResponseReturned(): void
     {
-        $this->setExpectedException('RuntimeException');
+        $this->expectException('RuntimeException');
 
         $collection = new Route\RouteCollection;
         $collection->setStrategy(new RestfulStrategy);
@@ -99,7 +103,7 @@ class DispatcherTest extends \PHPUnit_Framework_TestCase
      */
     public function testRestfulStrategyRouteReturnsResponseWhenControllerDoes()
     {
-        $mockResponse = $this->getMock('Symfony\Component\HttpFoundation\JsonResponse');
+        $mockResponse = $this->createMock('Symfony\Component\HttpFoundation\JsonResponse');
 
         $collection = new Route\RouteCollection;
 
@@ -123,19 +127,19 @@ class DispatcherTest extends \PHPUnit_Framework_TestCase
      */
     public function testClassBasedControllerInvokesCorrectMethod()
     {
-        $controller = $this->getMock('SomeClass', ['someMethod']);
+        $controller = $this->createMock(Route\Test\Fixture\SomeClass::class);
 
         $controller->expects($this->once())
                    ->method('someMethod')
                    ->with($this->equalTo('2'), $this->equalTo('phil'))
-                   ->will($this->returnValue('hello world'));
+                   ->willReturn('hello world');
 
-        $container = $this->getMock('League\Container\ContainerInterface');
+        $container = $this->createMock(ContainerInterface::class);
 
         $container->expects($this->once())
                   ->method('get')
                   ->with($this->equalTo('SomeClass'))
-                  ->will($this->returnValue($controller));
+                  ->willReturn($controller);
 
         $collection = new Route\RouteCollection($container);
         $collection->setStrategy(new UriStrategy);
@@ -154,9 +158,9 @@ class DispatcherTest extends \PHPUnit_Framework_TestCase
      */
     public function testClassBasedControllerRouteThrowsExceptionWhenNoFunctionPresent()
     {
-        $this->setExpectedException('RuntimeException');
+        $this->expectException('RuntimeException');
 
-        $container = $this->getMock('League\Container\ContainerInterface');
+        $container = $this->createMock(ContainerInterface::class);
 
         $collection = new Route\RouteCollection($container);
         $collection->setStrategy(new UriStrategy);
@@ -193,7 +197,7 @@ class DispatcherTest extends \PHPUnit_Framework_TestCase
      */
     public function testUriStrategyRouteReturnsResponseWhenControllerDoes()
     {
-        $mockResponse = $this->getMock('Symfony\Component\HttpFoundation\Response');
+        $mockResponse = $this->createMock('Symfony\Component\HttpFoundation\Response');
 
         $collection = new Route\RouteCollection;
         $collection->setStrategy(new UriStrategy);
@@ -218,7 +222,7 @@ class DispatcherTest extends \PHPUnit_Framework_TestCase
      */
     public function testUriStrategyRouteThrowsExceptionWhenResponseCannotBeBuilt()
     {
-        $this->setExpectedException('RuntimeException');
+        $this->expectException('RuntimeException');
 
         $collection = new Route\RouteCollection;
         $collection->setStrategy(new UriStrategy);
@@ -241,7 +245,7 @@ class DispatcherTest extends \PHPUnit_Framework_TestCase
      */
     public function testMethodArgumentStrategyRouteThrowsExceptionWhenResponseCannotBeBuilt()
     {
-        $this->setExpectedException('RuntimeException');
+        $this->expectException('RuntimeException');
 
         $collection = new Route\RouteCollection;
         $collection->setStrategy(new MethodArgumentStrategy);
@@ -261,19 +265,19 @@ class DispatcherTest extends \PHPUnit_Framework_TestCase
      */
     public function testClassBasedControllerInvokesCorrectMethodOnMethodArgumentStrategy()
     {
-        $controller = $this->getMock('SomeClass', ['someMethod']);
+        $controller = $this->createMock(Route\Test\Fixture\SomeClass::class);
 
-        $container = $this->getMock('League\Container\ContainerInterface');
+        $container = $this->createMock(ContainerInterface::class);
 
         $container->expects($this->once())
                   ->method('get')
                   ->with($this->equalTo('SomeClass'))
-                  ->will($this->returnValue($controller));
+                  ->willReturn($controller);
 
         $container->expects($this->once())
                   ->method('call')
                   ->with($this->equalTo([$controller, 'someMethod']), $this->equalTo(['name' => 'world']))
-                  ->will($this->returnValue('hello world'));
+                  ->willReturn('hello world');
 
         $collection = new Route\RouteCollection($container);
         $collection->setStrategy(new MethodArgumentStrategy);
@@ -315,14 +319,14 @@ class DispatcherTest extends \PHPUnit_Framework_TestCase
      */
     public function testRequestResponseStrategyRouteThrowsExceptionWhenWrongResponseReturned()
     {
-        $this->setExpectedException('RuntimeException');
+        $this->expectException('RuntimeException');
 
         $collection = new Route\RouteCollection;
         $collection->setStrategy(new RequestResponseStrategy);
 
         $collection->get('/route', function ($request, $response) {
-            $this->assertInstanceOf('Symfony\Component\HttpFoundation\Request', $request);
-            $this->assertInstanceOf('Symfony\Component\HttpFoundation\Response', $response);
+            $this->assertInstanceOf(Request::class, $request);
+            $this->assertInstanceOf(Response::class, $response);
             return [];
         });
 
@@ -413,19 +417,19 @@ class DispatcherTest extends \PHPUnit_Framework_TestCase
         $container = new Container();
 
         //Build mock provider
-        $provider = $this->getMock('League\Container\ServiceProvider');
+        $provider = $this->createMock(ServiceProvider::class);
 
-        $provider->expects($this->any())
+        $provider
                   ->method('provides')
-                  ->will($this->returnCallback(function() {
+                  ->willReturnCallback(function () {
                       $args = func_get_args();
                       return $args[0] === 'Symfony\Component\HttpFoundation\Request';
-                  }));
+                  });
 
         $provider->expects($this->once())
                   ->method('register')
                   ->will($this->returnCallback(function() use ($container) {
-                      $container->add('Symfony\Component\HttpFoundation\Request', null, true)->withArguments([['get' => 4], ['post' => 5]]);
+                      $container->add(Request::class, null, true)->withArguments([['get' => 4], ['post' => 5]]);
                   }));
 
         $container->addServiceProvider($provider);
@@ -464,12 +468,12 @@ class DispatcherTest extends \PHPUnit_Framework_TestCase
 
     /**
      * Asserts that a 404 exception is thrown whilst using standard strategies
-     *
-     * @return void
      */
-    public function testDispatcherHandles404CorrectlyOnStandardStrategies()
+    public function testDispatcherHandles404CorrectlyOnStandardStrategies(): void
     {
-        $this->setExpectedException('League\Route\Http\Exception\NotFoundException', 'Not Found', 0);
+        $this->expectException(NotFoundException::class);
+        $this->expectExceptionMessage('Not Found');
+        $this->expectExceptionCode(0);
 
         $collection = new Route\RouteCollection;
         $dispatcher = $collection->getDispatcher();
@@ -502,12 +506,12 @@ class DispatcherTest extends \PHPUnit_Framework_TestCase
 
     /**
      * Asserts that a 405 exception is thrown whilst using standard strategies
-     *
-     * @return void
      */
-    public function testDispatcherHandles405CorrectlyOnStandardStrategies()
+    public function testDispatcherHandles405CorrectlyOnStandardStrategies(): void
     {
-        $this->setExpectedException('League\Route\Http\Exception\MethodNotAllowedException', 'Method Not Allowed', 0);
+        $this->expectException(MethodNotAllowedException::class);
+        $this->expectExceptionMessage('Method Not Allowed');
+        $this->expectExceptionCode(0);
 
         $collection = new Route\RouteCollection;
 
@@ -522,17 +526,15 @@ class DispatcherTest extends \PHPUnit_Framework_TestCase
     /**
      * Asserts that a custom strategy is dispatched correctly and the return of that
      * method bubbles out to the dispatcher
-     *
-     * @return void
      */
-    public function testCustomStrategyIsDispatchedCorrectly()
+    public function testCustomStrategyIsDispatchedCorrectly(): void
     {
-        $mockStrategy = $this->getMock('League\Route\Strategy\StrategyInterface');
+        $mockStrategy = $this->createMock(StrategyInterface::class);
 
         $mockStrategy->expects($this->once())
                      ->method('dispatch')
                      ->with($this->equalTo(['Controller', 'method']), $this->equalTo(['id' => 2, 'name' => 'phil']))
-                     ->will($this->returnValue(['id' => 2, 'name' => 'phil']));
+                     ->willReturn(['id' => 2, 'name' => 'phil']);
 
         $collection = new Route\RouteCollection;
         $collection->get('/route/{id}/{name}', 'Controller::method', $mockStrategy);

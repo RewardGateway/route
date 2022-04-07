@@ -3,8 +3,9 @@
 namespace League\Route\Test\Http\JsonResponse;
 
 use League\Route\Http\JsonResponse\Created;
+use PHPUnit\Framework\TestCase;
 
-class CreatedTest extends \PHPUnit_Framework_Testcase
+class CreatedTest extends TestCase
 {
     /**
      * Asserts that new Created responses have a 201 status code

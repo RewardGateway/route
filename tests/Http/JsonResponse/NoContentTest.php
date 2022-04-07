@@ -3,8 +3,9 @@
 namespace League\Route\Test\Http\JsonResponse;
 
 use League\Route\Http\JsonResponse\NoContent;
+use PHPUnit\Framework\TestCase;
 
-class NoContentTest extends \PHPUnit_Framework_Testcase
+class NoContentTest extends TestCase
 {
     /**
      * Asserts that new NoContent responses have a 204 status code
