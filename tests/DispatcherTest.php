@@ -36,14 +36,12 @@ class DispatcherTest extends TestCase
         $container = $this->createMock(Container::class);
         $request   = $this->createMock(Request::class);
 
-        $container->expects($this->at(0))->method('isRegistered')->willReturn(false);
-        $container->expects($this->at(1))->method('isInServiceProvider')->willReturn(true);
-        $container->expects($this->at(2))->method('get')->willReturn($request);
+        $container->method('isRegistered')->willReturn(false);
+        $container->method('isInServiceProvider')->willReturn(true);
 
-        $container->expects($this->at(3))
-                  ->method('get')
-                  ->with($this->equalTo('SomeClass'))
-                  ->willReturn($controller);
+        $container->method('get')
+            ->withConsecutive(['Symfony\Component\HttpFoundation\Request'], [$this->equalTo('SomeClass')])
+            ->willReturnOnConsecutiveCalls($request, $controller);
 
         $collection = new Route\RouteCollection($container);
         $collection->setStrategy(new RestfulStrategy);
